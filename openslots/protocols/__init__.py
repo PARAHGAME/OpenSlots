@@ -1,0 +1,1 @@
+"""Communication protocols for peripherals and accounting systems"""
