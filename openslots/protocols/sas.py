@@ -25,6 +25,7 @@ class SASGame(object):
 
     @property
     def coin_in(self):
+        """Total coin in credits"""
         return self._meters[0x00]
 
     @coin_in.setter
@@ -33,11 +34,48 @@ class SASGame(object):
 
     @property
     def coin_out(self):
+        """Total coin out credits"""
         return self._meters[0x01]
 
     @coin_out.setter
     def coin_out(self, n):
-        self._meters[0x01] + n if n > 0 else 0
+        self._meters[0x01] += n if n > 0 else 0
+
+    @property
+    def jackpots(self):
+        """Total jackpot credits"""
+        return self._meters[0x02]
+
+    @jackpots.setter
+    def jackpots(self, n):
+        self._meters[0x02] += n if n > 0 else 0
+
+    @property
+    def hand_paid(self):
+        """Total hand paid cancelled credits"""
+        return self._meters[0x03]
+
+    @hand_paid.setter
+    def hand_paid(self, n):
+        self._meters[0x03] += n if n > 0 else 0
+
+    @property
+    def xld_credits(self):
+        """Total canceled credits"""
+        return self._meters[0x04]
+
+    @xld_credits.setter
+    def xld_credits(self, n):
+        self._meters[0x04] += n if n > 0 else 0
+
+    @property
+    def games_played(self):
+        """Total games played"""
+        return self._meters[0x05]
+
+    @games_played.setter
+    def games_played(self, n):
+        self._meters[0x05] += n if n > 0 else 0
 
     def SE_validation_number(self):
         """Generate secure-enhanced ticket validation number from seed
