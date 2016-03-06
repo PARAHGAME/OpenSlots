@@ -43,9 +43,20 @@ class SASMeter(object):
         self.id = int(i)
         self.__len__ = lambda: int(size)
         self.value = int(value)
+        self._sdescr = ''
+        self.description = ''
+
+    @property
+    def name(self):
+        """Short description of this meter, truncated to 50 chars"""
+        return self._sdescr
+
+    @name.setter
+    def name(self, s):
+        self._sdescr = s[:50]
 
     def __repr__(self):
-        return "<SASMeter {:#06x}, value {}>".format(self.id, str(self))
+        return "<SASMeter {:#06x} {}, value {}>".format(self.id, self.name, str(self))
 
     def __str__(self):
         return str(self.value).rjust(self.__len__() * 2, '0')
