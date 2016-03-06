@@ -17,14 +17,27 @@ def crc(b, seed=0):
     return (seed).to_bytes(2, byteorder='little')
 
 
-SASByte = namedtuple('SASByte', ['x', 'addr'])
-
-
 class SASGame(object):
     def __init__(self):
         self._meters = Counter()
         self._v_id = 0
         self._v_seq = 0
+
+    @property
+    def coin_in(self):
+        return self._meters[0x00]
+
+    @coin_in.setter
+    def coin_in(self, n):
+        self._meters[0x00] += n if n > 0 else 0
+
+    @property
+    def coin_out(self):
+        return self._meters[0x01]
+
+    @coin_out.setter
+    def coin_out(self, n):
+        self._meters[0x01] + n if n > 0 else 0
 
     def SE_validation_number(self):
         """Generate secure-enhanced ticket validation number from seed
