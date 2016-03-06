@@ -57,6 +57,12 @@ def bcd_to_int(x):
 
 
 class SASMeter(object):
+    """An SASMeter stores a value and contains methods useful for SAS clients. The value can only either be incremented
+    by some value or cleared (reset to zero). It also stores the digit length that will be used when converting to BCD
+    in response to SAS polls. Lastly, it can easily be converted to BCD for responding to SAS polls by simply calling
+    bytes() on it.
+    """
+
     def __init__(self, i, size=4):
         self.id = int(i)
         self.__len__ = lambda: int(size)
