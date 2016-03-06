@@ -7,6 +7,21 @@ from collections import namedtuple, Counter
 ___SAS_version___ = 602     # SAS version 6.02
 
 
+## Supported meters ##
+
+
+# List of tuples: (id, size, name, description)
+# Used to initialize SASGame instance
+
+_602_meters = [
+    (0x00, 4, 'coin_in', 'Total coin in credits'),
+    (0x01, 4, 'coin_out', 'Total coin out credits'),
+]
+
+
+## Useful functions ##
+
+
 def crc(b, seed=0):
     """Compute 16-bit CRC from bytes or sequence of ints, returns bytes"""
     for x in b:
@@ -14,7 +29,7 @@ def crc(b, seed=0):
         seed = (seed >> 4) ^ (q * 0o10201)
         q = (seed ^ (x >> 4)) & 0o17
         seed = (seed >> 4) ^ (q * 0o10201)
-    return (seed).to_bytes(2, byteorder='little')
+    return seed.to_bytes(2, byteorder='little')
 
 
 def int_to_bcd(i, length=0):
@@ -38,22 +53,40 @@ def bcd_to_int(x):
     return int(s, 16)
 
 
+## Class definitions ##
+
+
 class SASMeter(object):
-    def __init__(self, i, size=4, value=0):
+    def __init__(self, i, size=4):
         self.id = int(i)
         self.__len__ = lambda: int(size)
-        self.value = int(value)
-        self._sdescr = ''
+        self._value = 0
+        self._name = ''
         self.description = ''
 
     @property
     def name(self):
         """Short description of this meter, truncated to 50 chars"""
-        return self._sdescr
+        return self._name
 
     @name.setter
     def name(self, s):
-        self._sdescr = s[:50]
+        self._name = s[:50]
+
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, n):
+        self._value = n if n > self._value else self._value
+
+    @value.deleter
+    def value(self):
+        self._value = 0
+
+    def clear(self):
+        del self.value
 
     def __repr__(self):
         return "<SASMeter {:#06x} {}, value {}>".format(self.id, self.name, str(self))
@@ -76,10 +109,19 @@ class SASMeter(object):
 
 
 class SASGame(object):
-    def __init__(self):
-        self._meters = Counter()
+    def __init__(self, meters=_602_meters):
         self._v_id = 0
         self._v_seq = 0
+
+        self._meters = meters
+        self.meters = dict()
+        for m in meters:
+            this_m = SASMeter(m[0], m[1])
+            this_m.name = m[2].lstrip('_')
+            this_m.description = m[3]
+
+            setattr(self, this_m.name, this_m)
+            self.meters[this_m.name] = this_m
 
     def SE_validation_number(self):
         """Generate secure-enhanced ticket validation number from seed
