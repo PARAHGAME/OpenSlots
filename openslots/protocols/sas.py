@@ -120,8 +120,13 @@ class SASGame(object):
         self._v_seq = 0
 
         self._meters = meters
+        self.clear_meters()
+
+    def clear_meters(self):
+        """Initialize all meters to 0"""
+
         self.meters = dict()
-        for m in meters:
+        for m in self._meters:
             this_m = SASMeter(m[0], m[1])
             this_m.name = m[2].lstrip('_')
             this_m.description = m[3]
