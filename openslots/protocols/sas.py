@@ -17,6 +17,53 @@ def crc(b, seed=0):
     return (seed).to_bytes(2, byteorder='little')
 
 
+def int_to_bcd(i, length=0):
+    if i < 0 or not isinstance(i, int):
+        raise ValueError("`i` must be a positive integer or 0")
+
+    if length < 0 or not isinstance(length, int):
+        raise ValueError("`length` must be a positive integer or 0")
+
+    return int(str(i), 16).to_bytes(length, 'big')
+
+
+def bcd_to_int(x):
+    if not isinstance(x, bytes):
+        raise ValueError("`x` must be bytes object")
+
+    s = ''
+    for i in x:
+        s += format(i, 'x')
+
+    return int(s, 16)
+
+
+class SASMeter(object):
+    def __init__(self, i, size=4, value=0):
+        self.id = int(i)
+        self.__len__ = lambda: int(size)
+        self.value = int(value)
+
+    def __repr__(self):
+        return "<SASMeter {:#06x}, value {}>".format(self.id, str(self))
+
+    def __str__(self):
+        return str(self.value).rjust(self.__len__() * 2, '0')
+
+    def __bytes__(self):
+        return int_to_bcd(self.value, self.__len__())
+
+    def __iadd__(self, n):
+        self.value += n if n > 0 else 0
+        return self
+
+    def __int__(self):
+        return int(self.value)
+
+    def __float__(self):
+        return float(self.value)
+
+
 class SASGame(object):
     def __init__(self):
         self._meters = Counter()
