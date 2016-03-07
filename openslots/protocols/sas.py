@@ -174,7 +174,7 @@ class SASGame(object):
             this_m.description = m[3]
 
             setattr(self, this_m.name, this_m)
-            self.meters[this_m.name] = this_m
+            self.meters[this_m.id] = this_m
 
     def SE_validation_number(self):
         """Generate secure-enhanced ticket validation number from seed
