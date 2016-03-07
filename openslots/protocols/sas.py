@@ -10,12 +10,44 @@ ___SAS_version___ = 602     # SAS version 6.02
 ## Supported meters ##
 
 
-# List of tuples: (id, size, name, description)
+# List of tuples: (id, size, name, description, current)
 # Used to initialize SASGame instance
 
 _602_meters = [
     (0x00, 4, 'coin_in', 'Total coin in credits'),
     (0x01, 4, 'coin_out', 'Total coin out credits'),
+    (0x02, 4, 'jackpot_out', 'Total jackpot credits'),
+    (0x03, 4, 'handpay_out', 'Total hand paid canceled credits'),
+    (0x04, 4, 'total_cxld', 'Total canceled credits'),
+    (0x05, 4, 'games_played', 'Games played'),
+    (0x06, 4, 'games_won', 'Games won'),
+    (0x07, 4, 'games_lost', 'Games lost'),
+    (0x08, 4, 'coin_acc_in', 'Total credits from coin acceptor'),
+    (0x09, 4, 'hopper_out', 'Total credits paid from hopper'),
+    (0x0a, 4, 'coins_to_drop', 'Total credits from coins to drop'),
+    (0x0b, 4, 'bills_in', 'Total credits from bills accepted'),
+    (0x0c, 4, 'credits', 'Current credits', True),
+
+    # 0x0d thru 0x14 deprecated in SAS 6.02, implemented in comm logic for
+    # backwards compatibility using 0x80 thru 0x8b
+
+    (0x15, 4, 'ticket_in', 'Total ticket in (credits cashable, nonrestricted '
+     'and restricted)'),
+    (0x16, 4, 'ticket_out', 'Total ticket out (credits cashable, nonrestricted '
+     'and restricted)'),
+    (0x17, 4, 'eft_in', 'Total electronic transfers in (credits cashable, '
+     'nonrestricted, and restricted) not including host bonusing'),
+    (0x18, 4, 'eft_out', 'Total electronic transfers out'),
+    (0x19, 4, 'restricted_play', 'Total restricted credits played'),
+    (0x1a, 4, 'nonrestricted_play', 'Total nonrestricted credits played'),
+    (0x1b, 4, 'current_restricted', 'Current restricted credits', True),
+    (0x1c, 4, 'paytable_win', 'Total machine-paid paytable win, not including '
+     'progressive or external bonus credits'),
+    (0x1d, 4, 'progressive_win', 'Total machine-paid progressive win'),
+    (0x1e, 4, 'ext_bonus_win', 'Total machine-paid external bonus win'),
+    (0x1f, 4, 'att_paytable_win', 'Total attendant-paid paytable win'),
+    (0x20, 4, 'att_progressive_win', 'Total attendant-paid progressive win'),
+    (0x21, 4, 'att_ext_bonus_win', 'Total attendant-paid external bonus win'),
 ]
 
 
@@ -57,18 +89,30 @@ def bcd_to_int(x):
 
 
 class SASMeter(object):
-    """An SASMeter stores a value and contains methods useful for SAS clients. The value can only either be incremented
-    by some value or cleared (reset to zero). It also stores the digit length that will be used when converting to BCD
-    in response to SAS polls. Lastly, it can easily be converted to BCD for responding to SAS polls by simply calling
-    bytes() on it.
+    """An SASMeter stores a value and contains methods useful for SAS clients.
+    The value can only either be incremented by some value or cleared (reset to
+    zero). It also stores the digit length that will be used when converting to
+    BCD in response to SAS polls. Lastly, it can easily be converted to BCD for
+    responding to SAS polls by simply calling bytes() on it.
+
+    If initialized with `current=True`, this meter tracks some "current" amount
+    and can be added to or subtracted from. Otherwise the meter is treated as a
+    "total" meter which can only be added to.
     """
 
-    def __init__(self, i, size=4):
+    def __init__(self, i, size=4, current=False):
         self.id = int(i)
         self.__len__ = lambda: int(size)
         self._value = 0
         self._name = ''
         self.description = ''
+
+        def isub(self, n):
+            self._value -= n if n < 0 else 0
+            return self
+
+        if current:
+            self.__isub__ = isub
 
     @property
     def name(self):
@@ -95,7 +139,8 @@ class SASMeter(object):
         del self.value
 
     def __repr__(self):
-        return "<SASMeter {:#06x} {}, value {}>".format(self.id, self.name, str(self))
+        temp = "<SASMeter {:#06x} {}, value {}>"
+        return temp.format(self.id, self.name, str(self))
 
     def __str__(self):
         return str(self.value).rjust(self.__len__() * 2, '0')
@@ -127,7 +172,7 @@ class SASGame(object):
 
         self.meters = dict()
         for m in self._meters:
-            this_m = SASMeter(m[0], m[1])
+            this_m = SASMeter(m[0], m[1], m[-1] if len(m) == 5 else False)
             this_m.name = m[2].lstrip('_')
             this_m.description = m[3]
 
