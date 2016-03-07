@@ -127,10 +127,6 @@ class SASMeter(object):
     def value(self):
         return self._value
 
-    @value.setter
-    def value(self, n):
-        self._value = n if n > self._value else self._value
-
     @value.deleter
     def value(self):
         self._value = 0
@@ -149,7 +145,7 @@ class SASMeter(object):
         return int_to_bcd(self.value, self.__len__())
 
     def __iadd__(self, n):
-        self.value += n if n > 0 else 0
+        self._value += n if n > 0 else 0
         return self
 
     def __int__(self):
