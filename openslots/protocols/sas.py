@@ -106,13 +106,7 @@ class SASMeter(object):
         self._value = 0
         self._name = ''
         self.description = ''
-
-        def isub(self, n):
-            self._value -= n if n < 0 else 0
-            return self
-
-        if current:
-            self.__isub__ = isub
+        self.__current = current
 
     @property
     def name(self):
@@ -146,6 +140,13 @@ class SASMeter(object):
 
     def __iadd__(self, n):
         self._value += n if n > 0 else 0
+        return self
+
+    def __isub__(self, n):
+        if self.__current:
+            self._value -= n if n > 0 else 0
+            if self._value < 0:
+                self._value = 0
         return self
 
     def __int__(self):
