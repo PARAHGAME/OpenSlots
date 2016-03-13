@@ -48,6 +48,33 @@ _602_meters = [
     (0x1f, 4, 'att_paytable_win', 'Total attendant-paid paytable win'),
     (0x20, 4, 'att_progressive_win', 'Total attendant-paid progressive win'),
     (0x21, 4, 'att_ext_bonus_win', 'Total attendant-paid external bonus win'),
+    (0x22, 4, 'total_win', 'Sum of total coin out and total jackpot'),
+    (0x23, 4, 'total_handpay', 'Sum of total hand paid canceled credits and '
+     'total jackpot'),
+    (0x24, 4, 'total_drop', 'Including but not limited to coins to drop, bills '
+     'to drop, tickets to drop, and EFT in'),
+    (0x25, 4, 'games_since_power_on', 'Games since last power reset'),
+    (0x26, 4, 'games_since_door_close', 'Games since last slot door closure'),
+    (0x27, 4, 'ext_coin_acc_in', 'Total credits from external coin acceptor'),
+    (0x28, 4, 'cashable_tkt_in', 'Total cashable ticket in, including '
+     'nonrestricted promo credits'),
+    (0x29, 4, 'regular_tkt_in', 'Total regular cashable ticket in'),
+    (0x2a, 4, 'restr_tkt_in', 'Total restricted promo ticket in'),
+    (0x2b, 4, 'nrestr_tkt_in', 'Total nonrestricted promo ticket in'),
+    (0x2c, 4, 'cashable_tkt_out', 'Total cashable ticket out, including debit'),
+    (0x2d, 4, 'restr_tkt_out', 'Total restricted promo ticket out'),
+    (0x2e, 4, 'cashable_eft_in', 'Electronic regular cashable transfers to '
+     'gaming machine, not including external bonus awards'),
+    (0x2f, 4, 'restr_eft_in', 'Electronic restricted promo transfers to gaming '
+     'machine, not including external bonus awards'),
+    (0x30, 4, 'nrestr_eft_in', 'Electronic nonrestricted promo transfers to '
+     'gaming machine, not including external bonus awards'),
+    (0x31, 4, 'debit_eft_in', 'Electronic debit transfers to gaming machine'),
+    (0x32, 4, 'cashable_eft_out', 'Electronic regular cashable transfers to host'),
+    (0x33, 4, 'restr_eft_out', 'Electronic restricted promo transfers to host'),
+    (0x34, 4, 'nrestr_eft_out', 'Electronic nonrestricted promo transfers to host'),
+    (0x35, 4, 'num_tkt_in', 'Quantity of regular cashable tickets in'),
+    (0x36, 4, 'num_restr_in', 'Quantity of ')
 ]
 
 
