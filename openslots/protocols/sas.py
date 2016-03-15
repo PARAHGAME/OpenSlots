@@ -1,7 +1,7 @@
 """Implement IGT's Slot Accounting System protocol"""
 
 
-from collections import namedtuple, Counter
+import os
 
 
 ___SAS_version___ = 602     # SAS version 6.02
@@ -131,13 +131,23 @@ class SASMeter(object):
     "total" meter which can only be added to.
     """
 
-    def __init__(self, i, size=4, current=False):
+    def __init__(self, i, size=4, current=False, nvdir=None):
         self.id = int(i)
         self.__len__ = lambda: int(size)
-        self._value = 0
         self._name = ''
         self.description = ''
-        self.__current = current
+        self._current = current
+
+        if nvdir is not None:
+            # set up non-volatile meter storage
+            self._nv_fname = os.path.abspath(nvdir + os.path.sep + str(i))
+            if os.path.isfile(self._nv_fname):
+                with open(self._nv_fname, 'r') as nvfile:
+                    self._value = int(nvfile.read())
+            else:
+                self._value = 0
+        else:
+            self._nv_fname = None
 
     @property
     def name(self):
@@ -155,9 +165,15 @@ class SASMeter(object):
     @value.deleter
     def value(self):
         self._value = 0
+        self._update_nvfile()
 
     def clear(self):
         del self.value
+
+    def _update_nvfile(self):
+        if self._nv_fname is not None:
+            with open(self._nv_fname, 'w') as nvfile:
+                nvfile.write(str(self._value))
 
     def __repr__(self):
         temp = "<SASMeter {:#06x} {}, value {}>"
@@ -171,13 +187,15 @@ class SASMeter(object):
 
     def __iadd__(self, n):
         self._value += n if n > 0 else 0
+        self._update_nvfile()
         return self
 
     def __isub__(self, n):
-        if self.__current:
+        if self._current:
             self._value -= n if n > 0 else 0
             if self._value < 0:
                 self._value = 0
+        self._update_nvfile()
         return self
 
     def __int__(self):
@@ -188,11 +206,12 @@ class SASMeter(object):
 
 
 class SASGame(object):
-    def __init__(self, meters=_602_meters):
+    def __init__(self, meters=_602_meters, nvdir=None):
         self._v_id = 0
         self._v_seq = 0
 
         self._meters = meters
+        self.nvdir = nvdir
         self.clear_meters()
 
     def clear_meters(self):
@@ -200,7 +219,8 @@ class SASGame(object):
 
         self.meters = dict()
         for m in self._meters:
-            this_m = SASMeter(m[0], m[1], m[-1] if len(m) == 5 else False)
+            this_m = SASMeter(m[0], m[1], m[-1] if len(m) == 5 else False,
+                              nvdir=self.nvdir)
             this_m.name = m[2].lstrip('_')
             this_m.description = m[3]
 
