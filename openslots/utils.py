@@ -1,6 +1,7 @@
 """OpenSlots utilities, including RNG"""
 
 
+import math
 import time
 import threading
 
@@ -32,3 +33,8 @@ class RNG(object):
     def stop_cycle(self):
         self.is_cycling = False
         self.rng_thread.join()
+
+    def choice(self, seq):
+        """Return a random item from a given sequence"""
+        r = math.floor(self._cur * len(seq))
+        return seq[r]
