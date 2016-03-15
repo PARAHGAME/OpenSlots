@@ -37,7 +37,7 @@ class RNG(object):
     def choice(self, seq):
         """Return a random item from a given sequence"""
 
-        r = math.floor(self._cur * len(seq))
+        r = math.floor(self._rng.rand() * len(seq))
         return seq[r]
 
     def chi_square(self, n=1000000, k=1000):

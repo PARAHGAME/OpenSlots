@@ -5,13 +5,11 @@ from collections import namedtuple, Counter
 
 
 ___SAS_version___ = 602     # SAS version 6.02
+"""int: current SAS version defined in this module"""
 
 
 ## Supported meters ##
 
-
-# List of tuples: (id, size, name, description, current)
-# Used to initialize SASGame instance
 
 _602_meters = [
     (0x00, 4, 'coin_in', 'Total coin in credits'),
@@ -76,6 +74,12 @@ _602_meters = [
     (0x35, 4, 'num_tkt_in', 'Quantity of regular cashable tickets in'),
     (0x36, 4, 'num_restr_in', 'Quantity of ')
 ]
+"""list: Meters defined by version 6.02 of the SAS protocol.
+
+This is a list of tuples (meter ID, BCD length, meter name, meter description,
+and optional boolean whether this meter can be decremented). Used for generating
+SASMeter objects during SASGame initialization.
+"""
 
 
 ## Useful functions ##
