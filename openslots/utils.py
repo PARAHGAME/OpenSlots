@@ -40,7 +40,7 @@ class RNG(object):
         r = math.floor(self._cur * len(seq))
         return seq[r]
 
-    def chisquare(self, k=1000, n=1000000):
+    def chi_square(self, n=1000000, k=1000):
         """Perform a chi-square goodness of fit test on the RNG.
 
         Args:
@@ -55,7 +55,8 @@ class RNG(object):
 
             You'll want to compare the resulting number against a chi-squared
             distribution table for the required p-value and k-1 degrees of
-            freedom.
+            freedom. The critical value for 95% confidence (p=0.05) at the
+            default k=1000 is approximately 1074.
         """
 
         if self.is_cycling:

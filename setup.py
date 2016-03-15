@@ -2,7 +2,7 @@
 
 """OpenSlots - Open-source framework for slot machine game development"""
 
-
+import os
 from setuptools import setup
 
 
