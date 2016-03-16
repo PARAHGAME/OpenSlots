@@ -1,6 +1,29 @@
 """Core OpenSlots module"""
 
 
+from tabulate import tabulate
+from .utils import RNG
+from .protocols import sas
+
+
+class Symbol(object):
+    def __init__(self, name, wild=False, wild_excludes=[], image=None):
+        self.name = name
+        self.image = image
+        self.wild = wild
+        self.wild_excludes = wild_excludes
+
+    def __eq__(self, other):
+        if self.wild and other.name not in self.wild_excludes:
+            return True
+        elif other.wild and self.name not in other.wild_excludes:
+            return True
+        elif self.name == other.name:
+            return True
+        else:
+            return False
+
+
 class Reel(object):
     def __init__(self, symbols, window=3):
         self.window = window
@@ -8,22 +31,58 @@ class Reel(object):
 
 
 class Game(object):
-    def __init__(self, reels, paytable):
+    def __init__(self, reels, paytable, rng=RNG, meters=sas.SASGame):
         self.reels = reels
         self.paytable = paytable
+        self.rng = rng()
+        self.meters = meters()
+        self.rng.cycle()
+        self._debug = True
 
+    def add_credits(self, n):
+        self.meters.credits += n
 
-class Symbol(object):
-    def __init__(self, name, image=None, wild=False, wild_excludes=None):
-        self.name = name
-        self.image = image
-        self.wild = wild
-        self.wild_excludes = wild_excludes
+    def cash_out(self):
+        self.meters.credits.clear()
 
-    def __eq__(self, other):
-        return (self.name == other.name or
-                self.wild and other.name not in self.wild_excludes
-                )
+    def spin(self, lines, line_bet):
+        self.meters.coin_in += lines * line_bet
+        self.meters.credits -= lines * line_bet
+
+        window = []
+        for reel in self.reels:
+            stop = self.rng.randint(0, len(reel.symbols))
+            stopp = stop + reel.window
+            if stopp > len(reel.symbols):
+                stopp -= len(reel.symbols)
+                this_r = reel.symbols[stop:]
+                this_r += reel.symbols[:stopp]
+            else:
+                this_r = reel.symbols[stop:stopp]
+            window.append(this_r)
+
+        if self._debug:
+            rows = []
+            numrows = max([r.window for r in self.reels])
+            for i in range(numrows):
+                this_row = []
+                for r in window:
+                    if i < len(r):
+                        this_row.append(r[i].name)
+                    else:
+                        this_row.append('')
+                rows.append(this_row)
+            print(tabulate(rows))
+
+        win = 0
+        for rule in self.paytable:
+            win += rule(window, lines) * line_bet
+        self.meters.coin_out += win
+        self.meters.credits += win
+
+        if self._debug:
+            print('Won ', win, ' credits')
+            print('Credits: ', self.meters.credits)
 
 
 class GameRule(object):
@@ -46,7 +105,7 @@ class GameRule(object):
 class ScatterPay(GameRule):
     """Evaluate a win condition for a scatter pay rule"""
 
-    def __call__(self, window):
+    def __call__(self, window, *args, **kwargs):
         """
         Determine how much to pay for a symbol appearing anywhere on any reel.
 
@@ -118,7 +177,7 @@ class LinePay(GameRule):
 class WinWays(GameRule):
     """Evaluate a win condition for adjacent reels"""
 
-    def __call__(self, window):
+    def __call__(self, window, *args, **kwargs):
         """Determine how much to pay for symbols on adjacent reels.
 
         Args:

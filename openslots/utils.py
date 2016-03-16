@@ -37,8 +37,13 @@ class RNG(object):
     def choice(self, seq):
         """Return a random item from a given sequence"""
 
-        r = math.floor(self._rng.rand() * len(seq))
+        r = math.floor(self._rng.random() * len(seq))
         return seq[r]
+
+    def randint(self, a, b):
+        """Return a random integer between a and b"""
+
+        return math.floor((self._rng.random() * (b-a)) + a)
 
     def chi_square(self, n=1000000, k=1000):
         """Perform a chi-square goodness of fit test on the RNG.

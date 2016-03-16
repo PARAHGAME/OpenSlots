@@ -149,6 +149,7 @@ class SASMeter(object):
                 with open(self._nv_fname, 'x') as nvfile:
                     nvfile.write(str(self._value))
         else:
+            self._value = 0
             self._nv_fname = None
 
     @property
