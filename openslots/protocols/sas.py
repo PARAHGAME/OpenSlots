@@ -140,12 +140,14 @@ class SASMeter(object):
 
         if nvdir is not None:
             # set up non-volatile meter storage
-            self._nv_fname = os.path.abspath(nvdir + os.path.sep + str(i))
+            self._nv_fname = os.path.normpath(nvdir + os.path.sep + str(i))
             if os.path.isfile(self._nv_fname):
                 with open(self._nv_fname, 'r') as nvfile:
                     self._value = int(nvfile.read())
             else:
                 self._value = 0
+                with open(self._nv_fname, 'x') as nvfile:
+                    nvfile.write(str(self._value))
         else:
             self._nv_fname = None
 
