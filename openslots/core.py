@@ -28,7 +28,41 @@ class Symbol(object):
 
 class GameRule(object):
     """Base class for evaluating win conditions and triggering events"""
-    pass
+
+    def __init__(self, symbol, pays):
+        """
+        Args:
+            symbol (Symbol): The Symbol object this rule evaluates for
+            pays (seq): How much times line bet to pay for `i` symbols
+        """
+
+        self.symbol = symbol
+        self.pays = pays
+
+    def __call__(self, *args, **kwargs):
+        raise NotImplementedError
+
+
+class ScatterPay(GameRule):
+    """Evaluate a win condition for a scatter pay rule"""
+
+    def __call__(self, window):
+        """
+        Determine how much to pay for a symbol appearing anywhere on any reel.
+
+        Args:
+            window (seq): A sequence containing slices from a number of reels
+
+        Returns:
+            win (int): The amount won (if any)
+        """
+        n = 0
+        for reel in window:
+            for sym in reel:
+                if sym == self.symbol:
+                    n += 1
+
+        return self.pays[n-1] if n > 0 else 0
 
 
 class LinePay(GameRule):
@@ -84,22 +118,6 @@ class LinePay(GameRule):
 class WinWays(GameRule):
     """Evaluate a win condition for adjacent reels"""
 
-    def __init__(self, symbol, pays):
-        """
-        Args:
-            symbol (Symbol): The Symbol object this rule evaluates for
-            pays (seq): How much times bet to pay for symbol on `i` adjacent reels
-
-        Win will be multiplied by number of symbol appearing on reels.
-
-        Example:
-            If pays=[0, 1, 2, 5, 10], will pay total 8x bet for 2, 1, and 2
-            symbols appearing on reels 1, 2, and 3 (2x bet, x2, x2)
-        """
-
-        self.symbol = symbol
-        self.pays = pays
-
     def __call__(self, window):
         """Determine how much to pay for symbols on adjacent reels.
 
@@ -108,9 +126,15 @@ class WinWays(GameRule):
 
         Returns:
             win (int): The amount won (if any)
+
+        Win will be multiplied by number of symbol appearing on reels.
+
+        Example:
+            If pays=[0, 1, 2, 5, 10], will pay total 8x bet for 2, 1, and 2
+            symbols appearing on reels 1, 2, and 3 (2x bet, x2, x2)
         """
 
-        mult = 1  # total adjactent symbols appearing
+        mult = 1
         n = 0  # number of adjacent reels containing symbol
         for reel in window:
             in_reel = 0
