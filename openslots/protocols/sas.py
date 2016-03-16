@@ -223,7 +223,7 @@ class SASGame(object):
         for m in self._meters:
             this_m = SASMeter(m[0], m[1], m[-1] if len(m) == 5 else False,
                               nvdir=self.nvdir)
-            this_m.name = m[2].lstrip('_')
+            this_m.name = m[2]
             this_m.description = m[3]
 
             setattr(self, this_m.name, this_m)
