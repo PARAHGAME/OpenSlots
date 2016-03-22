@@ -8,6 +8,36 @@ import threading
 from random import SystemRandom
 
 
+def calc_rtp(reels, rules):
+    """
+    Calculate theoretical average RTP
+
+    Args:
+        reels (seq:seq:Symbol): Reelstrips used in this game
+        rules (seq:GameRule): Win conditions
+    """
+
+    # calculate base symbol frequency
+    symbols = []
+    sym_freq = []
+    for i, r in enumerate(reels):
+        for s in r:
+            if s not in symbols:
+                symbols.append(s)
+        sym_freq.append([])
+        for s in symbols:
+            sym_freq[i] = r.count(s)
+
+    # add for wilds
+    for r in sym_freq:
+        for s in symbols:
+            if s.wild and s in r:
+                n = r.count(s)
+                for i, t in enumerate(r):
+                    if symbols[i] not in s.wild_excludes:
+                        t += n
+
+
 def rng_cycle(rng):
     while rng.is_cycling:
         rng._cur = rng._rng.random()

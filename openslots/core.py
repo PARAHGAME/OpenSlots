@@ -123,6 +123,63 @@ class ScatterPay(GameRule):
 
         return self.pays[n-1] if n > 0 else 0
 
+    def payback(self, freqs, reels, window):
+        """
+        Determine payback contribution by this rule
+
+        Args:
+            freqs (seq:int): Number of this symbol on each reel
+            reels (seq:Symbol): The reelstrips for this paytable
+            window (seq:int): Number of symbols visible in each reel
+        """
+
+        assert len(freqs) == len(reels) == len(window)
+        n = len(reels)
+        total_combos = 1
+
+        from functools import reduce
+        from operator import mul
+
+        # calculate stops which result in scatter being shown
+        winning_stops = []
+        losing_stops = []
+        for i, r in enumerate(reels):
+            num_stops = len(r)
+            winning_stops.append(freqs[i] * window[i])
+            losing_stops.append(num_stops - winning_stops)
+
+            # get total combinations (winning and losing) while we're at it
+            total_combos *= num_stops
+
+        # calculate combinations for each number of scatters
+        combos = [[] for i in range(n)]
+        for i in range(1<<n):
+            this_combo = []
+            mask = []
+            for j in range(n):
+                if i & 1<<j:
+                    this_combo.append(winning_stops[j])
+                    mask.append('a')
+                else:
+                    this_combo.append(losing_stops[j])
+                    mask.append('b')
+            combos[mask.count('a')] = this_combo
+
+        # calculate odds for each number of scatters
+        probs = []
+        for c in combos:
+            this_prob = 0
+            for x in c:
+                this_prob += reduce(mul, x, 1)
+            probs.append(this_prob / total_combos)
+
+        # and finally, calculate payback
+        payback = 0.0
+        for i, p in enumerate(probs):
+            payback += p * self.pays[i]
+
+        return payback
+
 
 class LinePay(GameRule):
     """Evaluate a win condition for a line-pay rule"""
