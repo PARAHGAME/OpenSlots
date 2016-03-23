@@ -13,7 +13,7 @@ def calc_rtp(reels, rules):
     Calculate theoretical average RTP
 
     Args:
-        reels (seq:seq:Symbol): Reelstrips used in this game
+        reels (seq:Reel): Reelstrips used in this game
         rules (seq:GameRule): Win conditions
     """
 
@@ -21,21 +21,31 @@ def calc_rtp(reels, rules):
     symbols = []
     sym_freq = []
     for i, r in enumerate(reels):
-        for s in r:
+        for s in r.symbols:
             if s not in symbols:
                 symbols.append(s)
-        sym_freq.append([])
-        for s in symbols:
-            sym_freq[i] = r.count(s)
+        sym_freq.append([r.symbols.count(s) for s in symbols])
 
     # add for wilds
-    for r in sym_freq:
+    for i, r in enumerate(reels):
         for s in symbols:
             if s.wild and s in r:
-                n = r.count(s)
-                for i, t in enumerate(r):
-                    if symbols[i] not in s.wild_excludes:
-                        t += n
+                n = r.symbols.count(s)
+                for j, t in enumerate(symbols):
+                    if t not in s.wild_excludes:
+                        sym_freq[i][j] += n
+
+    # get frequencies of symbol on each reel
+    freqs = []
+    for i, s in enumerate(symbols):
+        freqs.append([x[i] for x in sym_freq])
+
+    payback = 0.0
+    for r in rules:
+        sym_idx = symbols.index(r.symbol)
+        payback += r.payback(freqs[sym_idx], reels)
+
+    return payback
 
 
 def rng_cycle(rng):

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-from openslots.core import Game, LinePay, ScatterPay, Symbol, Reel
+from openslots.core import Game, LinePay, Symbol, Reel
+from openslots.utils import calc_rtp
 seven = Symbol('7')
 bell = Symbol('B')
 orange = Symbol('O')
@@ -17,7 +18,7 @@ rules.append(LinePay(plum, [0, 0, 14], paylines))
 rules.append(LinePay(bell, [0, 0, 18], paylines))
 rules.append(LinePay(melon, [0, 0, 20], paylines))
 rules.append(LinePay(bar, [0, 0, 100], paylines))
-rules.append(LinePay(seven, [0, 0, 200], paylines))
+rules.append(LinePay(seven, [0, 0, 1000], paylines))
 reels = []
 reel1 = [seven, bell, orange, melon, orange, plum, cherry, bar, orange, melon, orange, plum, cherry, bar, orange, melon, orange, plum, cherry, bar, orange, melon]
 reel2 = [seven, orange, melon, plum, melon, bell, cherry, bar, melon, plum, melon, bell, cherry, bar, melon, plum, melon, bell, cherry, bar, melon, plum]
@@ -25,6 +26,7 @@ reel3 = [seven, plum, bell, wbar, bell, melon, bell, orange, bell, melon, bell, 
 reels.append(Reel(reel1))
 reels.append(Reel(reel2))
 reels.append(Reel(reel3))
+print(calc_rtp(reels, rules))
 g = Game(reels, rules)
 
 choice = ''

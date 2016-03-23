@@ -123,17 +123,18 @@ class ScatterPay(GameRule):
 
         return self.pays[n-1] if n > 0 else 0
 
-    def payback(self, freqs, reels, window):
+    def payback(self, freqs, reels):
         """
         Determine payback contribution by this rule
 
         Args:
             freqs (seq:int): Number of this symbol on each reel
-            reels (seq:Symbol): The reelstrips for this paytable
-            window (seq:int): Number of symbols visible in each reel
+            reels (seq:Reel): The reelstrips for this paytable
         """
 
-        assert len(freqs) == len(reels) == len(window)
+        assert len(freqs) == len(reels)
+        window = [r.window for r in reels]
+        reels = [r.symbols for r in reels]
         n = len(reels)
         total_combos = 1
 
@@ -146,14 +147,19 @@ class ScatterPay(GameRule):
         for i, r in enumerate(reels):
             num_stops = len(r)
             winning_stops.append(freqs[i] * window[i])
-            losing_stops.append(num_stops - winning_stops)
+            losing_stops.append(num_stops - winning_stops[i])
 
             # get total combinations (winning and losing) while we're at it
             total_combos *= num_stops
 
+        print('Winning stops: ', winning_stops)
+        print('Losing stops: ', losing_stops)
+        print('Total combos: ', total_combos)
+        input()
+
         # calculate combinations for each number of scatters
         combos = [[] for i in range(n)]
-        for i in range(1<<n):
+        for i in range(1, 1<<n):
             this_combo = []
             mask = []
             for j in range(n):
@@ -163,7 +169,10 @@ class ScatterPay(GameRule):
                 else:
                     this_combo.append(losing_stops[j])
                     mask.append('b')
-            combos[mask.count('a')] = this_combo
+            combos[mask.count('a')-1].append(this_combo)
+
+        print('Combos: ', combos)
+        input()
 
         # calculate odds for each number of scatters
         probs = []
@@ -171,7 +180,12 @@ class ScatterPay(GameRule):
             this_prob = 0
             for x in c:
                 this_prob += reduce(mul, x, 1)
+            print('This prob: ', this_prob)
+            input()
             probs.append(this_prob / total_combos)
+
+        print('Probs: ', probs)
+        input()
 
         # and finally, calculate payback
         payback = 0.0
@@ -182,7 +196,7 @@ class ScatterPay(GameRule):
 
 
 class LinePay(GameRule):
-    """Evaluate a win condition for a line-pay rule"""
+    """Evaluate a win condition for a line-pay rule. Pays only left to right."""
 
     def __init__(self, symbol, pays, paylines):
         """
@@ -229,6 +243,35 @@ class LinePay(GameRule):
                 win += self.pays[n-1]
 
         return win
+
+    def payback(self, freqs, reels):
+        """
+        Determine payback contribution by this rule
+
+        Args:
+            freqs (seq:int): Number of this symbol on each reel
+            reels (seq:Reel): The reelstrips for this paytable
+        """
+
+        assert len(freqs) == len(reels)
+        reels = [r.symbols for r in reels]
+        n = len(reels)
+        total_combos = 1
+
+        for r in reels:
+            total_combos *= len(r)
+
+        print('Total combos: ', total_combos)
+
+        payback = 0.0
+        for i, p in enumerate(self.pays):
+            win_odds = 1.0
+            for j, r in enumerate(reels[:i+1]):
+                win_odds *= freqs[j]
+            win_odds /= total_combos
+            payback += win_odds * p
+
+        return payback
 
 
 class WinWays(GameRule):
