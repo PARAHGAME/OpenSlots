@@ -152,11 +152,6 @@ class ScatterPay(GameRule):
             # get total combinations (winning and losing) while we're at it
             total_combos *= num_stops
 
-        print('Winning stops: ', winning_stops)
-        print('Losing stops: ', losing_stops)
-        print('Total combos: ', total_combos)
-        input()
-
         # calculate combinations for each number of scatters
         combos = [[] for i in range(n)]
         for i in range(1, 1<<n):
@@ -171,9 +166,6 @@ class ScatterPay(GameRule):
                     mask.append('b')
             combos[mask.count('a')-1].append(this_combo)
 
-        print('Combos: ', combos)
-        input()
-
         # calculate odds for each number of scatters
         probs = []
         for c in combos:
@@ -183,9 +175,6 @@ class ScatterPay(GameRule):
             print('This prob: ', this_prob)
             input()
             probs.append(this_prob / total_combos)
-
-        print('Probs: ', probs)
-        input()
 
         # and finally, calculate payback
         payback = 0.0
