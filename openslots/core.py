@@ -8,10 +8,18 @@ from .protocols import sas
 
 class Symbol(object):
     def __init__(self, name, wild=False, wild_excludes=[], image=None):
-        self.name = name
+        self._name = name
         self.image = image
         self.wild = wild
         self.wild_excludes = wild_excludes
+
+    @property
+    def name(self):
+        return self._name
+
+    def __hash__(self):
+        temp = self.name, self.wild, self.wild_excludes
+        return hash(temp)
 
     def __eq__(self, other):
         if self.wild and other.name not in self.wild_excludes:
@@ -150,6 +158,15 @@ class GameRule(object):
         self.symbol = symbol
         self.n = n
         self.pays = pays
+        self._mode = None
+
+    @property
+    def mode(self):
+        """Used by game engine to determine whether to pass a Payline
+        object or a sequence of reel slices when calling this rule.
+        """
+
+        return self._mode
 
     def __call__(self, *args, **kwargs):
         raise NotImplementedError
@@ -158,7 +175,19 @@ class GameRule(object):
 class LeftPay(GameRule):
     """Evaluate a left-to-right line pay"""
 
+    def __init__(self, *args, **kwargs):
+        super(self.__class__).__init__(*args, **kwargs)
+
+        self._mode = 'line'
+
     def __call__(self, line):
+        """
+        Args:
+            line (seq:Symbol): the payline to evaluate for
+
+        Returns either self.pays if win condition evaluates True, otherwise 0
+        """
+
         n = 0
         all_wilds = True
         for symbol in line:
@@ -173,6 +202,34 @@ class LeftPay(GameRule):
             return self.pays
         else:
             return 0
+
+    def payback(self, reels):
+        """
+        Args:
+            reels (seq:Reel): Reelstrips in use
+
+        Returns float, percentage return contributed by this rule.
+
+        Details:
+            Probability of having exactly `n` symbols `S` in a row is equal to
+            the probability of having at least `n` symbols `S` in a row, minus
+            the probability of having exactly `n` wild symbols in a row, minus
+            the probability of having more than `n` symbols in a row, where the
+            probability of having more than `n` symbols in a row is equal to the
+            sum of the probabilities of having at least `n+x` symbols in a row
+            up to where `n+x` equals the number of reels.
+        """
+
+        num_reels = len(reels)
+
+        wilds = dict()
+        for i, r in enumerate(reels):
+            for s in r.symbols:
+                if s in wilds:
+                    wilds[s][i] += 1
+                elif s.wild and self.symbol not in s.wild_excludes:
+                    wilds[s] = [0] * num_reels
+                    wilds[s][i] += 1
 
 
 class ScatterPay(GameRule):
