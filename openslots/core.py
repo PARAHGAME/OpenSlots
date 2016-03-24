@@ -29,6 +29,53 @@ class Reel(object):
         self.window = window
         self.symbols = symbols
 
+    def slice(self, stop):
+        """Get the symbols to display at the given reelstop.
+
+        Args:
+            stop (int): reelstop position at the top of the window
+
+        Returns:
+            slice (list:Symbol): list of Symbols displayed in the window at the
+                given reelstop
+        """
+
+        n = len(self.symbols)
+        assert n > stop >= 0
+
+        if stop + self.window > n:
+            # wrap reel around around
+            return self.symbols[stop:] + self.symbols[:stop + self.window - n]
+        else:
+            return self.symbols[stop:stop + self.window]
+
+
+class Payline(object):
+    def __init__(self, payline):
+        """
+        Args:
+            payline (seq:int): indices of displayed reel positions from the top
+
+        Example:
+            Payline([1, 1, 1, 1, 1])  # center of reels
+        """
+        self._payline = payline
+        self.active = False
+
+    def evaluate(self, window):
+        """Evaluate the state of this payline from the current position of the
+        reels.
+
+        Args:
+            window (seq:seq:Symbol): The currently displayed symbols on each reel
+
+        Returns:
+            lineSymbol): The symbols on this payline
+        """
+
+        assert len(window) == len(self._payline)
+        return [r[i] for r, i in zip(window, self._payline)]
+
 
 class Game(object):
     def __init__(self, reels, paytable, rng=RNG, meters=sas.SASGame):
@@ -250,15 +297,16 @@ class LinePay(GameRule):
         for r in reels:
             total_combos *= len(r)
 
-        print('Total combos: ', total_combos)
-
         payback = 0.0
-        for i, p in enumerate(self.pays):
+        higher_wins = 0.0
+        for i, p in zip(range(n, 0, -1), self.pays[::-1]):
             win_odds = 1.0
-            for j, r in enumerate(reels[:i+1]):
-                win_odds *= freqs[j]
+            for j, r in enumerate(reels):
+                win_odds *= freqs[j] if j < i else (len(reels[j]) - freqs[j])
             win_odds /= total_combos
+            print(win_odds)
             payback += win_odds * p
+            higher_wins += win_odds
 
         return payback
 
