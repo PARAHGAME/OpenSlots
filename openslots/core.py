@@ -7,15 +7,22 @@ from .protocols import sas
 
 
 class Symbol(object):
-    def __init__(self, name, wild=False, wild_excludes=[], image=None):
+    def __init__(self, name, wild=False, wild_excludes=tuple(), image=None):
         self._name = name
         self.image = image
         self.wild = wild
-        self.wild_excludes = wild_excludes
+        self.wild_excludes = tuple(wild_excludes)
 
     @property
     def name(self):
         return self._name
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        temp = "<%s wild: %s excludes: %s>"
+        return temp % (self.name, self.wild, self.wild_excludes)
 
     def __hash__(self):
         temp = self.name, self.wild, self.wild_excludes
