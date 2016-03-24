@@ -37,6 +37,10 @@ class Reel(object):
         self.window = window
         self.symbols = symbols
 
+    def __len__(self):
+        """Number of reelstops on this virtual reel"""
+        return len(self.symbols)
+
     def slice(self, stop):
         """Get the symbols to display at the given reelstop.
 
@@ -208,7 +212,8 @@ class LeftPay(GameRule):
         Args:
             reels (seq:Reel): Reelstrips in use
 
-        Returns float, percentage return contributed by this rule.
+        Returns (float, float): probability and percentage return contributed by
+            this rule.
 
         Details:
             Probability of having exactly `n` symbols `S` in a row is equal to
@@ -222,6 +227,8 @@ class LeftPay(GameRule):
 
         num_reels = len(reels)
 
+        # first determine which wilds apply to our symbol:
+
         wilds = dict()
         for i, r in enumerate(reels):
             for s in r.symbols:
@@ -230,6 +237,42 @@ class LeftPay(GameRule):
                 elif s.wild and self.symbol not in s.wild_excludes:
                     wilds[s] = [0] * num_reels
                     wilds[s][i] += 1
+
+        num_wilds = [0] * num_reels
+        for v in wilds.values():
+            for i, n in enumerate(v):
+                num_wilds[i] += n
+
+        # now that we have the number of wilds on each reel, we should be able
+        # to calculate the probabilities of having at least `x` number of wilds
+        # in a row:
+
+        wild_probs = [0.0] * num_reels
+        for i, r in enumerate(reels):
+            if not i:
+                wild_probs[i] = num_wilds[i] / len(r)
+            else:
+                wild_probs[i] = wild_probs[i-1] * (num_wilds[i] / len(r))
+
+        # now get probability of having exactly `self.n` wilds in a row:
+
+        prob_all_wild = wild_probs[self.n] - sum(wild_probs[self.n+1:])
+
+        # and basically repeat the process for our own symbol:
+
+        our_probs = [0.0] * num_reels
+        for i, r in enumerate(reels):
+            if not i:
+                our_probs[i] = r.count(self.symbol) / len(r)
+            else:
+                our_probs[i] = our_probs[i-1] * (r.count(self.symbol) / len(r))
+
+        final_prob = our_probs[self.n]
+        final_prob -= sum(our_probs[self.n+1:]) - prob_all_wild
+
+        final_return = final_prob * self.pays
+
+        return final_prob, final_return
 
 
 class ScatterPay(GameRule):
