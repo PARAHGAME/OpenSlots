@@ -219,8 +219,6 @@ class ScatterPay(GameRule):
             this_prob = 0
             for x in c:
                 this_prob += reduce(mul, x, 1)
-            print('This prob: ', this_prob)
-            input()
             probs.append(this_prob / total_combos)
 
         # and finally, calculate payback
@@ -252,8 +250,8 @@ class LinePay(GameRule):
                         ]
         """
 
-        self.symbol = symbol
-        self.pays = pays
+        super(self.__class__).__init__(symbol, pays)
+
         self.paylines = paylines
 
     def __call__(self, window, active):
