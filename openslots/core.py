@@ -74,7 +74,11 @@ class Payline(object):
         """
 
         assert len(window) == len(self._payline)
-        return [r[i] for r, i in zip(window, self._payline)]
+
+        if self.active:
+            return [r[i] for r, i in zip(window, self._payline)]
+        else:
+            return [None] * len(window)
 
 
 class Game(object):
@@ -135,18 +139,40 @@ class Game(object):
 class GameRule(object):
     """Base class for evaluating win conditions and triggering events"""
 
-    def __init__(self, symbol, pays):
+    def __init__(self, symbol, n, pays):
         """
         Args:
             symbol (Symbol): The Symbol object this rule evaluates for
-            pays (seq): How much times line bet to pay for `i` symbols
+            n (int): Number of symbols to evaluate condition for
+            pays (int): How much times line bet to pay for `n` symbols
         """
 
         self.symbol = symbol
+        self.n = n
         self.pays = pays
 
     def __call__(self, *args, **kwargs):
         raise NotImplementedError
+
+
+class LeftPay(GameRule):
+    """Evaluate a left-to-right line pay"""
+
+    def __call__(self, line):
+        n = 0
+        all_wilds = True
+        for symbol in line:
+            if symbol == self.symbol:
+                n += 1
+                if not symbol.wild:
+                    all_wilds = False
+            else:
+                break
+
+        if n == self.n and not all_wilds:
+            return self.pays
+        else:
+            return 0
 
 
 class ScatterPay(GameRule):
