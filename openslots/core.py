@@ -270,9 +270,10 @@ class LeftPay(GameRule):
         our_probs = [0.0] * num_reels
         for i, r in enumerate(reels):
             if not i:
-                our_probs[i] = r.count(self.symbol) / len(r)
+                our_probs[i] = r.symbols.count(self.symbol) / len(r)
             else:
-                our_probs[i] = our_probs[i-1] * (r.count(self.symbol) / len(r))
+                our_probs[i] = our_probs[i-1]
+                our_probs *= (r.symbols.count(self.symbol) / len(r))
 
         final_prob = our_probs[self.n]
         final_prob -= sum(our_probs[self.n+1:]) - prob_all_wild
