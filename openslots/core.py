@@ -11,7 +11,7 @@ class Symbol(object):
         self._name = name
         self.image = image
         self.wild = wild
-        self.wild_excludes = tuple(wild_excludes)
+        self.wild_excludes = tuple(wild_excludes) + (name,)
 
     @property
     def name(self):
@@ -47,6 +47,18 @@ class Reel(object):
     def __len__(self):
         """Number of reelstops on this virtual reel"""
         return len(self.symbols)
+
+    def count(self, symbol):
+        """Count of given symbol on this reel by visible name, wilds
+        not included.
+        """
+
+        n = 0
+        for s in self.symbols:
+            if s.name == symbol.name:
+                n += 1
+
+        return n
 
     def slice(self, stop):
         """Get the symbols to display at the given reelstop.
@@ -167,6 +179,7 @@ class GameRule(object):
         """
 
         self.symbol = symbol
+        assert n > 0
         self.n = n
         self.pays = pays
         self._mode = None
@@ -187,7 +200,7 @@ class LeftPay(GameRule):
     """Evaluate a left-to-right line pay"""
 
     def __init__(self, *args, **kwargs):
-        super(self.__class__).__init__(*args, **kwargs)
+        GameRule.__init__(self, *args, **kwargs)
 
         self._mode = 'line'
 
@@ -241,7 +254,7 @@ class LeftPay(GameRule):
             for s in r.symbols:
                 if s in wilds:
                     wilds[s][i] += 1
-                elif s.wild and self.symbol not in s.wild_excludes:
+                elif s.wild and self.symbol.name not in s.wild_excludes:
                     wilds[s] = [0] * num_reels
                     wilds[s][i] += 1
 
@@ -263,20 +276,22 @@ class LeftPay(GameRule):
 
         # now get probability of having exactly `self.n` wilds in a row:
 
-        prob_all_wild = wild_probs[self.n] - sum(wild_probs[self.n+1:])
+        prob_all_wild = wild_probs[self.n-1] - sum(wild_probs[self.n:])
 
         # and basically repeat the process for our own symbol:
 
         our_probs = [0.0] * num_reels
         for i, r in enumerate(reels):
+            num_sym = r.count(self.symbol) + num_wilds[i]
             if not i:
-                our_probs[i] = r.symbols.count(self.symbol) / len(r)
+                our_probs[i] = num_sym / len(r)
             else:
                 our_probs[i] = our_probs[i-1]
-                our_probs *= (r.symbols.count(self.symbol) / len(r))
+                our_probs[i] *= num_sym / len(r)
 
-        final_prob = our_probs[self.n]
-        final_prob -= sum(our_probs[self.n+1:]) - prob_all_wild
+        print(our_probs)
+        final_prob = our_probs[self.n-1]
+        final_prob -= sum(our_probs[self.n:]) - prob_all_wild
 
         final_return = final_prob * self.pays
 
