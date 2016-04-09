@@ -15,9 +15,25 @@ def calc_rtp(reels, rules):
     Args:
         reels (seq:Reel): Reelstrips used in this game
         rules (seq:GameRule): Win conditions
+
+    Details:
+        This method will calculate theoretical average RTP for each mode and
+        return them as a dict keyed by mode.
+
+        Default win modes supported are `line` and `scatter`. Any win modes not
+        supported must implement a `.payback(reels, rules)` method.
+
+        Line wins:
     """
 
-    pass
+    # First get symbol counts on each reel, it'll make our lives easier
+    symbols_per_reel = dict()
+    num_reels = len(reels)
+    for i, r in enumerate(reels):
+        for s in r:
+            if s not in symbols_per_reel:
+                symbols_per_reel[s] = [0] * num_reels
+            symbols_per_reel[s][i] += 1
 
 
 def rng_cycle(rng):
