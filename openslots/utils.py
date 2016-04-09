@@ -26,6 +26,14 @@ def calc_rtp(reels, rules):
         Line wins:
     """
 
+    def prod(s):
+        """Return the cumulative product of a sequence, analogous to sum()"""
+
+        from functools import reduce
+        from operator import mul
+
+        return reduce(mul, s, 1)
+
     # First get symbol counts on each reel, it'll make our lives easier
     symbols_per_reel = dict()
     num_reels = len(reels)
@@ -34,6 +42,28 @@ def calc_rtp(reels, rules):
             if s not in symbols_per_reel:
                 symbols_per_reel[s] = [0] * num_reels
             symbols_per_reel[s][i] += 1
+
+    nw_line_rules = []
+    w_line_rules = []
+    scatter_rules = []
+    for rule in rules:
+        if rule.mode == 'line' and rule.symbol.wild:
+            w_line_rules.append(rule)
+        elif rule.mode == 'line':
+            nw_line_rules.append(rule)
+        elif rule.mode == 'scatter':
+            scatter_rules.append(rule)
+
+    # Iterate through linepays for nonwild symbols
+    for rule in nw_line_rules:
+        n = rule.n
+        s = rule.symbol
+
+        # Get symbols which are wild for this symbol
+        wilds = dict()
+        for k, v in symbols_per_reel.items():
+            if k.wild and s not in k.wild_excludes:
+                wilds[k] = v
 
 
 def rng_cycle(rng):
