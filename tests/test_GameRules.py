@@ -5,7 +5,8 @@ import sys
 print(os.path.abspath('./'))
 sys.path.append(os.path.abspath('./'))
 
-from openslots.core import Symbol, Reel, LeftPay
+from openslots.core import Symbol, Reel, LeftPay, evaluate_pays
+from openslots.utils import calc_rtp
 
 
 # This test is derived from the mathematical model of the Atkins Diet slot
@@ -92,14 +93,31 @@ for i, p in enumerate((0, 0, 10, 25, 50)):
 
 
 def test_LeftPay_payback():
-    payback_contrib = 0.0
-    for rule in rules:
-        if rule.mode == 'line':
-            s = rule.symbol
-            payback = rule.payback(reels)
-            print("{}x {}: {}".format(rule.n, s, payback))
-            payback_contrib += payback[1]
-    print("Total linepay payback contribution: {}".format(payback_contrib))
+    for r in reels:
+        assert r.count(atkins) == 1
+        assert len(r) == 32
+    assert reels[0].count(steak) == 2
+
+    assert atkins == steak
+    assert wings != eggs
+
+    pay = evaluate_pays(rules, [atkins, steak, atkins, atkins, eggs])[1]
+    if pay != 200:
+        print(pay)
+    pay = evaluate_pays(rules, [atkins, atkins, atkins, atkins, atkins])[1]
+    if pay != 5000:
+        print(pay)
+    pay = evaluate_pays(rules, [eggs, eggs, wings, steak, atkins])[1]
+    if pay != 0:
+        print(pay)
+    pay = evaluate_pays(rules, [butter, butter, atkins, steak, steak])[1]
+    if pay != 15:
+        print(pay)
+
+    payback = calc_rtp(reels, rules)
+    for rule in payback.rules:
+        # rule_payback = rule[0].pays * rule[1] * payback.total_combos
+        print("{}x {}: {}".format(rule[0].n, rule[0].symbol, rule[1]))
 
 
 if __name__ == '__main__':

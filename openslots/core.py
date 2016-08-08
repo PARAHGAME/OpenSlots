@@ -6,6 +6,18 @@ from .utils import RNG
 from .protocols import sas
 
 
+def evaluate_pays(rules, line):
+    highest_winner = 0
+    paid_rule = None
+    for rule in rules:
+        this_pay = rule(line)
+        if this_pay > highest_winner:
+            highest_winner = this_pay
+            paid_rule = rule
+
+    return paid_rule, highest_winner
+
+
 class Symbol(object):
     def __init__(self, name, wild=False, wild_excludes=tuple(), image=None):
         self._name = name
@@ -214,18 +226,27 @@ class LeftPay(GameRule):
 
         n = 0
         all_wilds = True
-        for symbol in line:
-            if symbol == self.symbol:
-                n += 1
-                if not symbol.wild:
-                    all_wilds = False
-            else:
-                break
 
-        if n == self.n and not all_wilds:
-            return self.pays
+        if self.symbol.wild:
+            for symbol in line:
+                if symbol.name == self.symbol.name:
+                    n += 1
+                else:
+                    break
+            if n == self.n:
+                return self.pays
         else:
-            return 0
+            for symbol in line:
+                if symbol == self.symbol:
+                    n += 1
+                    if not symbol.wild:
+                        all_wilds = False
+                else:
+                    break
+            if n == self.n and not all_wilds:
+                return self.pays
+
+        return 0
 
     def payback(self, reels):
         """

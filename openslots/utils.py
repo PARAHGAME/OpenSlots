@@ -34,36 +34,55 @@ def calc_rtp(reels, rules):
 
         return reduce(mul, s, 1)
 
+    import itertools
+    from collections import namedtuple
+
+    Payback = namedtuple('Payback', ['rules', 'total_combos'])
+
+    absolute_total_combos = prod([len(r) for r in reels])
+
     # First get symbol counts on each reel, it'll make our lives easier
+    # Also get symbols present on each reel
     symbols_per_reel = dict()
     num_reels = len(reels)
+    unique_sym_reels = []
     for i, r in enumerate(reels):
-        for s in r:
+        for s in r.symbols:
             if s not in symbols_per_reel:
                 symbols_per_reel[s] = [0] * num_reels
             symbols_per_reel[s][i] += 1
 
-    nw_line_rules = []
-    w_line_rules = []
+        unique_sym_reels.append(list(set(r.symbols)))
+
+    line_rules = []
     scatter_rules = []
     for rule in rules:
-        if rule.mode == 'line' and rule.symbol.wild:
-            w_line_rules.append(rule)
-        elif rule.mode == 'line':
-            nw_line_rules.append(rule)
+        if rule.mode == 'line':
+            line_rules.append(rule)
         elif rule.mode == 'scatter':
             scatter_rules.append(rule)
 
-    # Iterate through linepays for nonwild symbols
-    for rule in nw_line_rules:
-        n = rule.n
-        s = rule.symbol
+    # Iterate through line pay combinations:
+    possible_lines = itertools.product(*unique_sym_reels)
+    line_rule_pays = dict()
+    for line in possible_lines:
+        highest_winner = 0
+        paid_rule = None
+        for i, rule in enumerate(line_rules):
+            this_pay = rule(line)
+            if this_pay > highest_winner:
+                highest_winner = this_pay
+                paid_rule = i
+        if paid_rule is None:
+            continue
+        elif paid_rule in line_rule_pays:
+            line_rule_pays[paid_rule] += prod([reels[i].count(s) for i, s in enumerate(line)])
+        else:
+            line_rule_pays[paid_rule] = prod([reels[i].count(s) for i, s in enumerate(line)])
 
-        # Get symbols which are wild for this symbol
-        wilds = dict()
-        for k, v in symbols_per_reel.items():
-            if k.wild and s not in k.wild_excludes:
-                wilds[k] = v
+    line_pays = [(line_rules[k], v) for k, v in line_rule_pays.items()]
+
+    return Payback(line_pays, absolute_total_combos)
 
 
 def rng_cycle(rng):
